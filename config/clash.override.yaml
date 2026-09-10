@@ -1,0 +1,31 @@
+# https://clashparty.org/docs/guide/override/yaml
+
++rules:
+  # Local/work domains: force direct, bypass policy groups.
+  - DOMAIN,ssh.git.yun,DIRECT
+  - DOMAIN,lib.ituohuang.com,DIRECT
+  - DOMAIN,sa.linux.yun,DIRECT
+  - DOMAIN-SUFFIX,git.yun,DIRECT
+  - DOMAIN-SUFFIX,open.yun,DIRECT
+  - DOMAIN-SUFFIX,thh.cc,DIRECT
+  - DOMAIN-SUFFIX,todesk.com,DIRECT
+  - DOMAIN-SUFFIX,todesk.io,DIRECT
+  - DOMAIN-SUFFIX,115.com,DIRECT
+  - DOMAIN-SUFFIX,docs.qq.com,DIRECT
+  - IP-CIDR,100.64.0.0/10,DIRECT,no-resolve
+
+  # Custom proxy domains.
+  - DOMAIN,keke.patricialflores3637.workers.dev,节点选择
+  - DOMAIN-SUFFIX,yixi.tv,节点选择
+  - DOMAIN-SUFFIX,kekenet.com,节点选择
+
+  # Unity 全家桶走节点
+  - DOMAIN-SUFFIX,unity.com,节点选择
+  - DOMAIN-SUFFIX,unity3d.com,节点选择
+  - DOMAIN-SUFFIX,unitychina.cn,节点选择
+  - DOMAIN-SUFFIX,plasticscm.com,节点选择
+  # Unity 下载依赖
+  - DOMAIN-SUFFIX,aka.ms,节点选择
+  - DOMAIN,dl.google.com,节点选择
+  - DOMAIN,go.microsoft.com,节点选择
+  - DOMAIN,storage.googleapis.com,节点选择
