@@ -12,6 +12,7 @@
   - DOMAIN-SUFFIX,todesk.io,DIRECT
   - DOMAIN-SUFFIX,115.com,DIRECT
   - DOMAIN-SUFFIX,docs.qq.com,DIRECT
+  - DOMAIN-SUFFIX,api.pub.dxx.cld.pub,DIRECT
   - IP-CIDR,100.64.0.0/10,DIRECT,no-resolve
 
   # Custom proxy domains.
