@@ -6,6 +6,9 @@ providers, or public upstreams. DNS UDP/TCP listeners bind ephemeral loopback
 ports. All resolver paths point to a local trap; any upstream query fails.
 
 This tests fake-IP answers, not Internet IPv6 reachability or production DoH.
+The child alone uses the upstream SKIP_SYSTEM_IPV6_CHECK test switch: the
+normal core removes the IPv6 pool on hosts without global-unicast IPv6.
+No network settings are changed and no DNS assertions are skipped.
 v1.19.31 needs an IPv6 pool as well as the two IPv6 switches:
 https://github.com/MetaCubeX/mihomo/blob/v1.19.31/dns/middleware.go
 https://github.com/MetaCubeX/mihomo/blob/v1.19.31/config/config.go
@@ -17,6 +20,7 @@ import hashlib
 import io
 import ipaddress
 import json
+import os
 import platform
 import secrets
 import socket
@@ -227,7 +231,11 @@ def run_case(core, label, generated, expect_ipv6):
         log = stack.enter_context((directory / "core.log").open("w+b"))
         process = subprocess.Popen([str(core), "-d", str(directory), "-f", str(path)],
                                    cwd=directory, stdin=subprocess.DEVNULL,
-                                   stdout=log, stderr=subprocess.STDOUT)
+                                   stdout=log, stderr=subprocess.STDOUT,
+                                   # Upstream test hook, scoped to this DNS-only child.
+                                   # Runner interfaces need not have global IPv6; all
+                                   # queries stay on IPv4 loopback and AAAA is synthetic.
+                                   env={**os.environ, "SKIP_SYSTEM_IPV6_CHECK": "true"})
         try:
             domain = f"acl-{label}-{secrets.token_hex(8)}.invalid"
             deadline = time.monotonic() + 15
@@ -248,7 +256,7 @@ def run_case(core, label, generated, expect_ipv6):
                 pool6 = ipaddress.ip_network(generated["dns"]["fake-ip-range6"], strict=False)
                 require(ipv6 and all(ip.version == 6 and ip in pool6 for ip in ipv6),
                         f"{label}: expected nonempty AAAA in {pool6}, got {ipv6}; "
-                        "the host must support IPv6 sockets (no external IPv6 route is needed)")
+                        "the isolated child must retain its configured IPv6 pool")
             else:
                 require(not ipv6, f"{label}: expected empty AAAA, got {ipv6}")
             no_upstream_queries(upstream_udp, upstream_tcp)
@@ -296,7 +304,8 @@ def main():
     disabled = copy.deepcopy(configs["ipv6"])
     disabled["ipv6"] = disabled["dns"]["ipv6"] = False
     run_case(core, "ipv6-explicit-off", disabled, expect_ipv6=False)
-    print("Isolated Mihomo fake-IP DNS runtime regressions passed")
+    print("Isolated Mihomo fake-IP DNS runtime regressions passed "
+          "(child-only SKIP_SYSTEM_IPV6_CHECK=true; no host IPv6 reachability claim)")
 
 
 if __name__ == "__main__":
