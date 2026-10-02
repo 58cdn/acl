@@ -68,6 +68,15 @@ class Regressions(unittest.TestCase):
             for name in ("A", "B"):
                 self.assertEqual((root / f"rules/providers/{name}.list").read_bytes(), b"DOMAIN,old.example\n")
 
+    def test_unknown_url_regex_requires_review(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            (root / "rules").mkdir()
+            (root / "rules/sources.json").write_text(json.dumps({"A": "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/A.list"}))
+            with self.assertRaisesRegex(ValueError, "new unsupported rule requires review"):
+                sync(root=root, fetch=lambda _: b"DOMAIN,example.com\nURL-REGEX,new-pattern\n", revision="a" * 40)
+            self.assertFalse((root / "rules/providers/A.list").exists())
+
 
 if __name__ == "__main__":
     unittest.main()

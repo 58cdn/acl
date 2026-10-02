@@ -30,7 +30,7 @@ def build(check=False):
             if not path.exists() or path.read_text(encoding="utf-8") != content:
                 raise ValueError(f"stale generated private file: {path.name}")
         else:
-            path.write_text(content, encoding="utf-8")
+            path.write_bytes(content.encode("utf-8"))
     print("Private provider lists and legacy overlay are consistent")
 
 

@@ -52,7 +52,7 @@ def download(url, limit=MAX_BYTES, validate=True):
             raise ValueError("non-text/unsuccessful response")
         data = bytearray()
         while True:
-            block = response.read(65536)
+            block = response.read1(65536)
             if not block:
                 break
             data.extend(block)

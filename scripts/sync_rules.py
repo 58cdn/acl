@@ -51,6 +51,9 @@ def sync(root=ROOT, fetch=None, check=False, revision=None):
     if check:
         print(f"Validated {len(data)} upstream lists; {len(changed)} differ from the reviewed snapshot")
         return changed
+    if not changed:
+        print(f"Validated {len(data)} lists; no content changes, retaining the reviewed revision")
+        return changed
     staged = []
     try:
         for name in changed:

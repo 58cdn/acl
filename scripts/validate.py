@@ -96,6 +96,10 @@ def sources():
         for path in ROOT.glob(pattern):
             assert isinstance(load(path), dict), path
     manifest = json.loads((ROOT / "rules/sources.json").read_text())
+    lock = json.loads((ROOT / "ci/tools.json").read_text())
+    action = load(ROOT / ".github/actions/validate/action.yml")
+    upstream = next(s for s in action["runs"]["steps"] if s.get("with", {}).get("repository") == "ZeroDeng01/sublinkPro")
+    assert upstream["with"]["ref"] == lock["sublink_revision"]
     snapshot = json.loads((ROOT / "rules/snapshot.json").read_text())
     assert set(manifest) == set(snapshot["sha256"])
     for name, digest in snapshot["sha256"].items():
