@@ -1,6 +1,4 @@
-# SublinkPro YAML template (historical .ini filename; NOT subconverter INI).
-# Private entry: private.override.yaml -> build_private.py -> Clash.private.yaml / private/*.list.
-# Endpoint selection: prepare_template.py --probe; see README for runtime limits.
+# Generated SublinkPro template with private overlay; edit the sources, then build_private.py.
 port: 7890
 socks-port: 7891
 allow-lan: true
@@ -17,6 +15,9 @@ dns:
   - '*.local'
   - localhost
   - '*.ts.net'
+  - '*.git.yun'
+  - '*.open.yun'
+  - sa.linux.yun
   default-nameserver:
   - 223.5.5.5
   - 1.1.1.1
@@ -31,6 +32,9 @@ dns:
     +.cn:
     - https://dns.alidns.com/dns-query
     - https://doh.pub/dns-query
+    +.git.yun: system
+    +.open.yun: system
+    sa.linux.yun: system
   fallback:
   - https://1.1.1.1/dns-query
   - https://dns.google/dns-query
@@ -106,8 +110,20 @@ proxy-groups:
   expected-status: 204
 rules:
 - IP-CIDR,100.64.0.0/10,DIRECT,no-resolve
-- RULE-SET,PrivateDirect,DIRECT
-- RULE-SET,PrivateProxy,节点选择
+- DOMAIN,ssh.git.yun,DIRECT
+- DOMAIN,lib.ituohuang.com,DIRECT
+- DOMAIN,sa.linux.yun,DIRECT
+- DOMAIN-SUFFIX,git.yun,DIRECT
+- DOMAIN-SUFFIX,open.yun,DIRECT
+- DOMAIN-SUFFIX,thh.cc,DIRECT
+- DOMAIN-SUFFIX,todesk.com,DIRECT
+- DOMAIN-SUFFIX,todesk.io,DIRECT
+- DOMAIN-SUFFIX,115.com,DIRECT
+- DOMAIN-SUFFIX,docs.qq.com,DIRECT
+- DOMAIN-SUFFIX,api.pub.dxx.cld.pub,DIRECT
+- DOMAIN,keke.patricialflores3637.workers.dev,节点选择
+- DOMAIN-SUFFIX,yixi.tv,节点选择
+- DOMAIN-SUFFIX,kekenet.com,节点选择
 - RULE-SET,Unity,节点选择
 - DOMAIN-SUFFIX,openai.com,Ai平台
 - DOMAIN-SUFFIX,chatgpt.com,Ai平台

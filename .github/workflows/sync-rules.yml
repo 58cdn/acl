@@ -1,0 +1,65 @@
+name: Sync ACL4SSR rules
+on:
+  schedule:
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+permissions:
+  contents: write
+  pull-requests: write
+  actions: write
+concurrency:
+  group: sync-acl4ssr
+  cancel-in-progress: false
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          persist-credentials: true
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r requirements.txt
+      - name: Download one immutable validated upstream snapshot
+        id: snapshot
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          revision="$(gh api repos/ACL4SSR/ACL4SSR/commits/master --jq .sha)"
+          python scripts/sync_rules.py --revision "$revision"
+          echo "revision=$revision" >> "$GITHUB_OUTPUT"
+          if ! git diff --quiet -- rules; then
+            echo 'changed=true' >> "$GITHUB_OUTPUT"
+          fi
+      # Bot-created PRs do not reliably trigger pull_request CI. Validate before any push.
+      - uses: ./.github/actions/validate
+        if: steps.snapshot.outputs.changed == 'true'
+      - name: Commit only to a new bot branch and open a review PR
+        if: steps.snapshot.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          UPSTREAM_SHA: ${{ steps.snapshot.outputs.revision }}
+          BASE_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          set -euo pipefail
+          branch="bot/sync-rules-${UPSTREAM_SHA:0:12}"
+          if git ls-remote --exit-code --heads origin "$branch" >/dev/null; then
+            echo "Existing bot branch $branch retained; inspect its PR instead of overwriting it."
+            gh pr list --head "$branch" --state all
+            exit 0
+          fi
+          git switch -c "$branch"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- rules/providers rules/snapshot.json
+          git commit -m "chore: 同步 ACL4SSR 规则 ${UPSTREAM_SHA:0:12}"
+          git push origin "HEAD:refs/heads/$branch"
+          gh workflow run validate.yml --ref "$branch"
+          if ! gh pr create --base "$BASE_BRANCH" --head "$branch" --title 'chore: 同步 ACL4SSR 规则快照' --body-file ci/sync-pr-body.md; then
+            echo 'PR creation blocked. Ask the repository owner to review Actions PR permissions; do not auto-enable permissions or add credentials.' >&2
+            exit 1
+          fi

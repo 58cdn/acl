@@ -1,4 +1,4 @@
-# Generated compatibility alias; edit private.override.yaml, then build_private.py.
+# Canonical private override; public policy, never put credentials here.
 +rules:
 - IP-CIDR,100.64.0.0/10,DIRECT,no-resolve
 - DOMAIN,ssh.git.yun,DIRECT

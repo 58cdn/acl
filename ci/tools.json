@@ -1,0 +1,10 @@
+{
+  "sublink_revision": "11479dacf0a73ec0e43e1ee7e811ad31136e46f9",
+  "mihomo_version": "v1.19.31",
+  "geoip_revision": "a6544a371c34182ecec0363eafccd4ab3b93a58f",
+  "geoip_git_blob": "81dba80fd7e9af2e6a9fbec1450e05987d3afad5",
+  "mihomo": {
+    "Linux": {"file": "mihomo-linux-amd64-compatible-v1.19.31.gz", "sha256": "04cf9f09671704f839ddbee2e93069dc831a4123a75281e725d1d96ab9ac1afc"},
+    "Windows": {"file": "mihomo-windows-amd64-compatible-v1.19.31.zip", "sha256": "93d14e9a13b49b2f2d256202d02cc8d14a7c4695edf084cae0f941986bc9c218"}
+  }
+}
