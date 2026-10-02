@@ -1,0 +1,34 @@
+name: Validate Clash configuration
+on:
+  push:
+    branches: [master, feature/clash-config-optimization, 'bot/sync-rules-*']
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: validate-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: ./.github/actions/validate
+      - name: Verify exact provider bodies at the tested commit
+        env:
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: python scripts/check_provider_urls.py --revision "$HEAD_SHA" > build/provider-url-evidence.txt
+      - name: Verify published URLs after merge
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        run: python scripts/check_provider_urls.py > build/published-url-evidence.txt
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: validation-evidence-${{ github.run_id }}
+          path: build/
+          retention-days: 14

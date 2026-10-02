@@ -1,0 +1,12 @@
+# Generated from config/private.override.yaml; do not edit.
+DOMAIN,ssh.git.yun
+DOMAIN,lib.ituohuang.com
+DOMAIN,sa.linux.yun
+DOMAIN-SUFFIX,git.yun
+DOMAIN-SUFFIX,open.yun
+DOMAIN-SUFFIX,thh.cc
+DOMAIN-SUFFIX,todesk.com
+DOMAIN-SUFFIX,todesk.io
+DOMAIN-SUFFIX,115.com
+DOMAIN-SUFFIX,docs.qq.com
+DOMAIN-SUFFIX,api.pub.dxx.cld.pub
