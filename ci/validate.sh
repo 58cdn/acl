@@ -23,3 +23,11 @@ for variant in base private ipv6; do
   .tools/mihomo -t -d "$root/.tools" -f "$root/build/$variant.yaml"
   .tools/mihomo -t -d "$root/.tools" -f "$root/build/$variant.flattened.yaml"
 done
+
+# Exercise the client legacy override against the real, pinned merge implementation.
+python scripts/test_clash_party_merge.py build/base.yaml
+python scripts/validate.py --generated build/legacy.yaml --flatten build/legacy.flattened.yaml
+.tools/mihomo -t -d "$root/.tools" -f "$root/build/legacy.yaml"
+.tools/mihomo -t -d "$root/.tools" -f "$root/build/legacy.flattened.yaml"
+# DNS-only temporary loopback process: no TUN, routes, system DNS, or external traffic.
+python scripts/test_mihomo_dns.py

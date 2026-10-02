@@ -7,6 +7,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 from common import ROOT, load, validate_rules, UniqueLoader
 from prepare_template import choose, prepare
+from build_private import legacy_overlay
 from sync_rules import sync
 from validate import validate, route_domain
 import yaml
@@ -40,6 +41,30 @@ class Regressions(unittest.TestCase):
         self.assertEqual(config["dns"]["nameserver-policy"]["+.git.yun"], "system")
         self.assertLess(config["rules"].index("DOMAIN,ssh.git.yun,DIRECT"), config["rules"].index("MATCH,漏网之鱼"))
         validate(config)
+
+    def test_ipv6_pool_removed_when_disabled(self):
+        base = prepare(load(ROOT / "config/Clash.ini"), ipv6=True)
+        self.assertEqual(base["dns"]["fake-ip-range6"], "fc00::/18")
+        disabled = prepare(base, ipv6=False)
+        self.assertFalse(disabled["ipv6"])
+        self.assertNotIn("fake-ip-range6", disabled["dns"])
+
+    def test_legacy_overlay_preserves_base_and_literal_policy_keys(self):
+        canonical = load(ROOT / "config/private.override.yaml")
+        legacy = legacy_overlay(canonical)
+        self.assertNotIn("fake-ip-filter", legacy["dns"])
+        self.assertEqual(legacy["dns"]["fake-ip-filter+"], canonical["dns"]["fake-ip-filter"])
+        self.assertEqual(legacy["dns"]["nameserver-policy"]["+.git.yun"], "system")
+        canonical["dns"]["nameserver-policy"]["+.git.yun"] = ["system"]
+        legacy = legacy_overlay(canonical)
+        self.assertEqual(legacy["dns"]["nameserver-policy"]["<+.git.yun>"], ["system"])
+        self.assertNotIn("+.git.yun", legacy["dns"]["nameserver-policy"])
+
+    def test_foreign_dns_cannot_bypass_proxy(self):
+        config = load(ROOT / "config/Clash.ini")
+        config["dns"]["fallback"][0] = "https://1.1.1.1/dns-query"
+        with self.assertRaisesRegex(AssertionError, "proxy-only"):
+            validate(config)
 
     def test_no_empty_subscription(self):
         config = load(ROOT / "config/Clash.private.yaml")

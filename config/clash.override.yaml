@@ -29,7 +29,7 @@ dns:
     +.git.yun: system
     +.open.yun: system
     sa.linux.yun: system
-  fake-ip-filter:
+  fake-ip-filter+:
   - '*.git.yun'
   - '*.open.yun'
   - sa.linux.yun

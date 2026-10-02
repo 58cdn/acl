@@ -28,6 +28,11 @@ def choose(groups, check=probe):
 def prepare(base, private=False, ipv6=False, probe_endpoints=False, check=probe, overlay=None):
     config = copy.deepcopy(base)
     config["ipv6"] = config["dns"]["ipv6"] = ipv6
+    # Mihomo returns empty AAAA in fake-ip mode without an IPv6 pool.
+    if ipv6:
+        config["dns"]["fake-ip-range6"] = "fc00::/18"
+    else:
+        config["dns"].pop("fake-ip-range6", None)
     if private:
         overlay = overlay if overlay is not None else load(ROOT / "config/private.override.yaml")
         hooks = {"RULE-SET,PrivateDirect,DIRECT", "RULE-SET,PrivateProxy,节点选择", "RULE-SET,Unity,节点选择", "IP-CIDR,100.64.0.0/10,DIRECT,no-resolve"}

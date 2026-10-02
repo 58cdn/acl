@@ -1,6 +1,20 @@
 """Publish canonical private overrides as native provider lists and legacy overlay."""
 import argparse
+import copy
 from common import ROOT, load, dump, validate_rules
+
+
+def legacy_overlay(overlay):
+    """Translate canonical data to Clash Party override-array syntax only."""
+    result = copy.deepcopy(overlay)
+    dns = result["dns"]
+    dns["fake-ip-filter+"] = dns.pop("fake-ip-filter")
+    # Scalar values preserve literal + keys in deepMerge. Array values do not.
+    dns["nameserver-policy"] = {
+        (f"<{key}>" if isinstance(value, list) and (key.startswith("+") or key.endswith("+")) else key): value
+        for key, value in dns["nameserver-policy"].items()
+    }
+    return result
 
 
 def outputs():
@@ -18,7 +32,7 @@ def outputs():
         content = "# Generated from config/private.override.yaml; do not edit.\n" + "\n".join(groups[policy]) + "\n"
         validate_rules(content.encode())
         result[ROOT / f"private/{name}.list"] = content
-    result[ROOT / "config/clash.override.yaml"] = "# Generated compatibility alias; edit private.override.yaml, then build_private.py.\n" + dump(overlay)
+    result[ROOT / "config/clash.override.yaml"] = "# Generated compatibility alias; edit private.override.yaml, then build_private.py.\n" + dump(legacy_overlay(overlay))
     from prepare_template import prepare
     result[ROOT / "config/Clash.private.yaml"] = "# Generated SublinkPro template with private overlay; edit the sources, then build_private.py.\n" + dump(prepare(load(ROOT / "config/Clash.ini"), private=True))
     return result

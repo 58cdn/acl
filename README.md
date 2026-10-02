@@ -8,7 +8,7 @@ Clash Meta / Mihomo 的 SublinkPro 模板与经审阅的 ACL4SSR 规则快照。
 
 推荐私人配置入口：在 SublinkPro 中使用本仓库的
 `https://raw.githubusercontent.com/58cdn/acl/master/config/Clash.private.yaml`。
-该文件由基础模板与 `config/private.override.yaml` **真实合成**，仍保留订阅占位符，包含私域的 system DNS 策略。原 `Clash.ini` URL 仍是可转换基础模板，通过原生 rule-provider 引入私人域名及 Unity；私域 split DNS 请使用完整私人入口。所有 `master` URL 需本 PR 合并后才发布，PR 期间请使用对应提交 SHA URL。
+该文件由基础模板与 `config/private.override.yaml` **真实合成**，仍保留订阅占位符，包含私域的 system DNS 策略。原 `Clash.ini` URL 仍是可转换基础模板，通过原生 rule-provider 引入私人域名及 Unity；私域 nameserver-policy 请使用完整私人入口。所有 `master` URL 需本 PR 合并后才发布，PR 期间请使用对应提交 SHA URL。
 
 私人维护步骤：
 
@@ -20,11 +20,12 @@ Clash Meta / Mihomo 的 SublinkPro 模板与经审阅的 ACL4SSR 规则快照。
 
 ## DNS 与 IPv6
 
-- 使用 fake-ip，默认同时关闭顶层 `ipv6` 和 `dns.ipv6`。需要 IPv6 时用 `python scripts/prepare_template.py --private --ipv6 --output build/template.yaml`，把产物作为 SublinkPro 模板。
-- 常规解析配置阿里、腾讯和 Cloudflare DoH；`.cn` 使用两家国内 DoH；fallback 有 Cloudflare/Google DoH 和 Cloudflare DoT。混合常规解析是可用性取舍，不能描述为按用户地域自动选 DNS。
-- `default-nameserver` 用 IP 引导加密解析器的主机名，可能产生明文引导查询。`proxy-server-nameserver` 独立解析代理节点，减少循环依赖。AI 域名指定 fallback 仅影响 DNS，不改变 AI 流量策略。
-- 私人入口把 git.yun、open.yun 和 sa.linux.yun 交给系统已有解析器，并加入 fake-ip-filter。系统必须原本能解析它们；这里没有发明内网 IP、DNS 地址或修改操作系统。fake-ip-filter 本身不负责 DNS 路由。
-- fallback-filter 只过滤保留/异常结果，不把整个 CGNAT 网段当污染；加密 DNS、节点可达性及系统 split DNS 仍取决于运行环境。不作“零泄漏”或国内/海外均可联网承诺。
+- 使用 fake-ip，默认同时关闭顶层 `ipv6` 和 `dns.ipv6`。需要 IPv6 时用 `python scripts/prepare_template.py --private --ipv6 --output build/template.yaml`，同时启用两处开关并设置 `fake-ip-range6: fc00::/18`，把产物作为 SublinkPro 模板。只开布尔值而没有 IPv6 池，固定内核会对 fake-ip AAAA 返回空答案。宿主必须支持 IPv6；该开关不配置系统/TUN 路由，不保证节点或 ISP 的 IPv6 连通性，地址池与现网冲突时应先调整池。
+- 常规解析与 `.cn` 策略使用阿里、腾讯两家国内 DoH；海外 fallback 的 Cloudflare/Google DoH 和 Cloudflare DoT 均显式加 `#自动选择`，强制通过只含代理测速组的出口。AI 域名走该 fallback；普通域名依照 fallback-filter 处理异常答案。这是国内解析器与海外代理 fallback 的分工，不按用户所在地自动选择，也不声称覆盖全部 DNS 污染形态。
+- `default-nameserver` 使用国内 DNS 的 IP 引导加密解析器主机名，可能产生明文引导查询。`proxy-server-nameserver` 独立使用国内 DoH 解析代理节点，不能指回依赖该节点的代理 DNS，避免循环依赖。海外解析器经 `自动选择`，即使流量选择器手动设成 DIRECT 也不会自动改成 DNS 直连；代理全部故障时应报告解析失败。AI 域名指定 fallback 仅影响 DNS，不改变 AI 流量策略。
+- 私人入口把 git.yun、open.yun 和 sa.linux.yun 交给 `system` DNS，并加入 fake-ip-filter。固定 Mihomo 的 Windows 实现枚举已启用且有网关的适配器 DNS，POSIX 实现读取 `/etc/resolv.conf`；它不是操作系统完整 split-DNS/Windows NRPT 调度器，也不保证枚举出 Tailscale/ZeroTier 的专用解析器。若 system 不可用，在 `config/private.override.yaml` 的相应 nameserver-policy 中填写你已核实的私域 DNS 地址（标量或列表），再生成。不要猜内网 IP，也不要指回 Mihomo 自己的 DNS 监听地址或形成转发环。fake-ip-filter 本身不负责 DNS 路由。
+- 旧 `config/clash.override.yaml` 是专门生成的 Clash Party 覆盖入口：`fake-ip-filter+` 追加并保留 `*.lan`、`*.local`、localhost、`*.ts.net`。scalar `+.git.yun: system` 保留字面 `+`；只有数组型策略键转义为 `<+.git.yun>`，避免客户端误判为前插指令。不要直接用 canonical 文件代替旧覆盖入口。
+- fallback-filter 只过滤保留/异常结果，不把整个 CGNAT 网段当污染；加密 DNS、节点可达性及私域解析仍取决于运行环境。不作“零泄漏”或国内/海外均可联网承诺。
 
 ## 单 URL 测速与容错边界
 
@@ -54,16 +55,16 @@ Mihomo 不支持上游 ChinaMedia、ProxyMedia、Download 中的 9 条 `URL-REGE
 
 有变化后先做真实生成与内核检查，提交到 `bot/sync-rules-<SHA>`，开 PR 并显式触发验证，不直接写 master/main，不 force、不自动 merge。已有 bot 分支不覆盖，需检查已有 PR。GitHub 默认 GITHUB_TOKEN 创建的 PR 不保证触发普通 PR 事件，所以不能省略同步 job 内部验证或显式 dispatch。
 
-**当前平台前提**：仓库 Actions 已启用，但 “Allow GitHub Actions to create and approve pull requests” 当前关闭；脚本不会改权限或配置 PAT。每日 job 可安全下载/校验并建立 bot 分支，但自动开 PR 会报告阻塞，需要仓库所有者另行决定该设置。`actions: write` 仅用于 dispatch 验证，`pull-requests: write` 不等于审批/合并授权。此任务不静默扩大权限。
+**当前平台前提**：仓库 Actions 已启用；自动创建同步 PR 尚待首次有变更的实际运行验证。REST 返回 `can_approve_pull_request_reviews: false` 仅足以说明不允许批准 review，不能单独证明 PR 创建被禁用。若创建实际失败，job 将保留准确错误并报告阻塞；脚本不会更改设置、扩大凭据权限或配置 PAT。`actions: write` 仅用于 dispatch 验证，`pull-requests: write` 不等于审批/合并授权。此任务不静默扩大权限。
 
 手动刷新：取得 ACL4SSR 的完整提交 SHA 后执行 `python scripts/sync_rules.py --revision <SHA>`，审阅 diff、运行验证、通过 PR 合并。回滚通过新的 PR 恢复旧快照/模板，客户端缓存按 provider interval 或手动刷新生效。
 
 ## 验证与证据
 
-本地快速检查：`python scripts/validate.py` 和 `python -m unittest discover -s tests -v`。完整 CI 固定 SublinkPro 提交，直接执行其 `DecodeClash`，输出基础、私人覆盖、IPv6 三种含虚构节点的成品。每种均做结构/顺序回归与官方 Mihomo v1.19.31 `-t`；还展开全部 provider 条目后再次交给真实内核解析，避免只校验惰性 provider 声明。工具版本/校验值在 `ci/tools.json`，只在测试目录使用，不启动代理服务。
+本地快速检查：`python scripts/validate.py` 和 `python -m unittest discover -s tests -v`。完整 CI 固定 SublinkPro 提交，直接执行其 `DecodeClash`，输出基础、私人覆盖、IPv6 三种含虚构节点的成品。每种均做结构/顺序回归与官方 Mihomo v1.19.31 `-t`；还展开全部 provider 条目后再次交给真实内核解析，避免只校验惰性 provider 声明。工具版本/校验值在 `ci/tools.json`。另下载并校验固定 Clash Party 的原始 `deepMerge`，在真实生成结果上测试旧覆盖合并、全部原 fake-ip-filter 和字面策略键，再做两次内核 `-t`。DNS 行为测试仅启动临时 loopback DNS 子进程，关闭代理端口/TUN/外部控制器和外部 DNS，查询 A/AAAA 验证默认关闭与 IPv6 地址池；不修改系统 DNS、路由或 VPN。
 
 合并前验证 **PR HEAD SHA** 上 34 个 provider URL 的 HTTP 响应、规则内容和逐字节快照一致性，明确映射到未来发布 URL；不会把 master 尚未存在的新文件 404 当作成功。master push 后再验证全部真正发布 URL。`validation-evidence` artifact 保存虚构成品和 URL 证据，Action 结果以具体 SHA 的运行页为准。
 
 这些检查证明语法、生成契约、规则内容和加载结构，**不证明**国内/海外实际联网、真实订阅节点、DNS 无泄漏、平台地域访问或本机 VPN 路由效果。
 
-官方依据：[SublinkPro loader](https://github.com/ZeroDeng01/sublinkPro/blob/11479dacf0a73ec0e43e1ee7e811ad31136e46f9/node/protocol/clash.go)、[Mihomo DNS](https://wiki.metacubex.one/config/dns/)、[代理组字段](https://wiki.metacubex.one/config/proxy-groups/)、[url-test](https://wiki.metacubex.one/config/proxy-groups/url-test/)、[rule-provider](https://wiki.metacubex.one/config/rule-providers/)、[固定内核规则解析器](https://github.com/MetaCubeX/mihomo/blob/v1.19.31/rules/parser.go)。
+官方依据：[SublinkPro loader](https://github.com/ZeroDeng01/sublinkPro/blob/11479dacf0a73ec0e43e1ee7e811ad31136e46f9/node/protocol/clash.go)、[Mihomo DNS](https://wiki.metacubex.one/config/dns/)、[固定内核 DNS 出口](https://github.com/MetaCubeX/mihomo/blob/v1.19.31/tunnel/dns_dialer.go)、[固定内核 fake-ip 中间件](https://github.com/MetaCubeX/mihomo/blob/v1.19.31/dns/middleware.go)、[Clash Party merge](https://github.com/mihomo-party-org/clash-party/blob/f528f65762dd4db818414923c60bd8522b64e972/src/main/utils/merge.ts)、[代理组字段](https://wiki.metacubex.one/config/proxy-groups/)、[url-test](https://wiki.metacubex.one/config/proxy-groups/url-test/)、[rule-provider](https://wiki.metacubex.one/config/rule-providers/)、[固定内核规则解析器](https://github.com/MetaCubeX/mihomo/blob/v1.19.31/rules/parser.go)。

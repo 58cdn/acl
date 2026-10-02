@@ -4,7 +4,17 @@
   "geoip_revision": "a6544a371c34182ecec0363eafccd4ab3b93a58f",
   "geoip_git_blob": "81dba80fd7e9af2e6a9fbec1450e05987d3afad5",
   "mihomo": {
-    "Linux": {"file": "mihomo-linux-amd64-compatible-v1.19.31.gz", "sha256": "04cf9f09671704f839ddbee2e93069dc831a4123a75281e725d1d96ab9ac1afc"},
-    "Windows": {"file": "mihomo-windows-amd64-compatible-v1.19.31.zip", "sha256": "93d14e9a13b49b2f2d256202d02cc8d14a7c4695edf084cae0f941986bc9c218"}
+    "Linux": {
+      "file": "mihomo-linux-amd64-compatible-v1.19.31.gz",
+      "sha256": "04cf9f09671704f839ddbee2e93069dc831a4123a75281e725d1d96ab9ac1afc"
+    },
+    "Windows": {
+      "file": "mihomo-windows-amd64-compatible-v1.19.31.zip",
+      "sha256": "93d14e9a13b49b2f2d256202d02cc8d14a7c4695edf084cae0f941986bc9c218"
+    }
+  },
+  "clash_party": {
+    "revision": "f528f65762dd4db818414923c60bd8522b64e972",
+    "merge_sha256": "1231ca43387875b63f960e2dd9374bb8e80148725cf8b09ac0566a0ccdcd9117"
   }
 }

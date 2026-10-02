@@ -2,6 +2,7 @@
 import argparse
 import hashlib
 import json
+import ipaddress
 from pathlib import Path
 from common import ROOT, load, dump, validate_rules
 from build_private import build
@@ -12,12 +13,23 @@ CGNAT = "IP-CIDR,100.64.0.0/10,DIRECT,no-resolve"
 def validate(config, generated=False):
     assert config["dns"]["enhanced-mode"] == "fake-ip"
     assert config["ipv6"] == config["dns"]["ipv6"]
+    if config["ipv6"]:
+        assert ipaddress.ip_network(config["dns"]["fake-ip-range6"]).version == 6
+    else:
+        assert "fake-ip-range6" not in config["dns"]
     assert len(config["dns"]["nameserver"]) >= 2
     assert config["dns"]["proxy-server-nameserver"]
     assert any(x.startswith("tls://") for x in config["dns"]["fallback"])
+    assert all(x.endswith("#自动选择") for x in config["dns"]["fallback"]), "foreign DNS must use proxy-only egress"
+    assert config["dns"]["nameserver"] == ["https://dns.alidns.com/dns-query", "https://doh.pub/dns-query"]
+    assert config["dns"]["proxy-server-nameserver"] == config["dns"]["nameserver"]
+    assert config["dns"]["default-nameserver"] == ["223.5.5.5", "119.29.29.29"]
     rules = config["rules"]
     assert rules[0] == CGNAT, "CGNAT must precede every proxy rule"
     assert rules[-1] == "MATCH,漏网之鱼"
+    for rule in rules:
+        if rule.startswith("DOMAIN-SUFFIX,") and rule.endswith(",Ai平台"):
+            assert "+." + rule.split(",")[1] in config["dns"]["fallback-filter"]["domain"]
     assert rules.index("RULE-SET,AI,Ai平台") < rules.index("RULE-SET,Bing,DIRECT")
     assert rules.index("RULE-SET,OpenAi,Ai平台") < rules.index("RULE-SET,Microsoft,DIRECT")
     groups = {g["name"]: g for g in config["proxy-groups"]}
@@ -26,6 +38,7 @@ def validate(config, generated=False):
     assert "DIRECT" in groups["Ai平台"]["proxies"]
     assert groups["节点选择"]["proxies"][0] == "自动选择"
     assert groups["自动选择"]["type"] == "select"
+    assert all(groups[n]["type"] == "url-test" for n in groups["自动选择"]["proxies"])
     tests = [g for g in groups.values() if g["type"] == "url-test"]
     assert len(tests) == 3 and len({g["url"] for g in tests}) == 3
     for group in tests:

@@ -20,14 +20,13 @@ dns:
   - sa.linux.yun
   default-nameserver:
   - 223.5.5.5
-  - 1.1.1.1
+  - 119.29.29.29
   nameserver:
   - https://dns.alidns.com/dns-query
   - https://doh.pub/dns-query
-  - https://1.1.1.1/dns-query
   proxy-server-nameserver:
   - https://dns.alidns.com/dns-query
-  - https://1.1.1.1/dns-query
+  - https://doh.pub/dns-query
   nameserver-policy:
     +.cn:
     - https://dns.alidns.com/dns-query
@@ -36,9 +35,9 @@ dns:
     +.open.yun: system
     sa.linux.yun: system
   fallback:
-  - https://1.1.1.1/dns-query
-  - https://dns.google/dns-query
-  - tls://1.0.0.1:853
+  - https://1.1.1.1/dns-query#自动选择
+  - https://dns.google/dns-query#自动选择
+  - tls://1.0.0.1:853#自动选择
   fallback-filter:
     geoip: false
     ipcidr:
@@ -47,11 +46,19 @@ dns:
     domain:
     - +.openai.com
     - +.chatgpt.com
+    - +.oaistatic.com
+    - +.oaiusercontent.com
     - +.anthropic.com
     - +.claude.ai
+    - +.claude.com
     - +.gemini.google.com
+    - +.generativelanguage.googleapis.com
+    - +.aistudio.google.com
     - +.copilot.microsoft.com
     - +.copilot.cloud.microsoft
+    - +.githubcopilot.com
+    - +.githubcopilot.net
+    - +.copilot-proxy.githubusercontent.com
 proxies: null
 proxy-groups:
 - name: 节点选择
