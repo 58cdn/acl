@@ -1,6 +1,8 @@
 # Generated compatibility alias; edit private.override.yaml, then build_private.py.
 +rules:
 - IP-CIDR,100.64.0.0/10,DIRECT,no-resolve
+- IP-CIDR6,fd7a:115c:a1e0::/48,DIRECT,no-resolve
+- DOMAIN-SUFFIX,ts.net,DIRECT
 - DOMAIN,ssh.git.yun,DIRECT
 - DOMAIN,lib.ituohuang.com,DIRECT
 - DOMAIN,sa.linux.yun,DIRECT
@@ -29,7 +31,13 @@ dns:
     +.git.yun: system
     +.open.yun: system
     sa.linux.yun: system
+    +.ts.net: 100.100.100.100
   fake-ip-filter+:
   - '*.git.yun'
   - '*.open.yun'
   - sa.linux.yun
+  - '+.ts.net'
+tun:
+  route-exclude-address+:
+  - 100.64.0.0/10
+  - fd7a:115c:a1e0::/48
