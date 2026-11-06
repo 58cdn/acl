@@ -1,4 +1,5 @@
 # Generated compatibility alias; edit private.override.yaml, then build_private.py.
+# Last update 2026-11-06 20:55
 +rules:
 - IP-CIDR,100.64.0.0/10,DIRECT,no-resolve
 - IP-CIDR6,fd7a:115c:a1e0::/48,DIRECT,no-resolve
